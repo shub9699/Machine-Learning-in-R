@@ -1,0 +1,101 @@
+***continue of LR*****
+#install package "car"
+library(car)
+vif(jpi_revised)
+#as all the VIF values are less than 5: there
+#is no multicolinearity in the model
+#qqnorm(jpi_revised$residuals)
+
+####dignose error check####
+#for that sum of error should be 0
+sum(jpi_revised$residuals)
+#-> 5.44e-15: as the number is close to 0 we prove 
+#that the residuals Linear model are 0
+#the output of multi. model and actual substraction 
+#of predicted with actual should be equal.
+
+**to check if errors are normally distributed**
+shapiro.test(proficiency$res)
+#p =0.1588 >0.05 : accepting ho : error is normally destributed
+
+#####check(test) for autocorelation####
+#autocorelation also called self corelation
+#it is always 1
+**durbin-watson test :DW  
+ 
+dw=auto= 2(1-r) ; r = coef of cor in error and its first lag 
+ 
+r : 1 : posive cor : DW= ? 0 
+ 
+r= 0 : no cor : DW =? 2  
+ 
+r= -1 ; -ve cor : DW =? 4 
+ 
+r :           -1        0        +1 
+dw:       4          2          0 
+ 
+Desired for linear regression r ~~ 0 and DW ~~2 
+
+durbinWatsonTest(jpi_rev)
+#Ho: there is no autocorrelation
+#Ha: there is autocorrelation
+
+->p: 0.06>0.05 : accept Ho.
+
+******example of LR using house.csv data*****
+summary(house)
+# remove variables that are not useful / duplicate for model building purpose 
+
+house$id<-NULL # id is just a identification entity
+house$date<-NULL # data belongs to single year
+house$zipcode<-NULL # data consist of duplicate colum lon-lat for location.
+
+# convert the yr_built in age of property 
+# convert the yr_ renovated in renovation age 
+head(house$yr_built)
+
+house$yr_built<- 2020 - house$yr_built
+head(house$yr_built)
+
+#1 convert all 0 to 2020 ; then subtract the column from 2020
+#2 subtract the column from 2020 ; replace 2020 by 0 
+
+house$yr_renovated[house$yr_renovated==0]<-2020
+head(house$yr_renovated,25)
+house$yr_renovated<-2020 - house$yr_renovated
+head(house$yr_renovated,50)
+
+# way 2
+house$yr_renovated<- 2020 - house$yr_renovated
+house$yr_renovated[house$yr_renovated==2020]<- 0 
+
+#replace NA values with median or mode
+colSums(is.na(house))
+house$price[is.na(house$price)]<-median(house$price,na.rm = T)
+house$sqft_lot[is.na(house$sqft_lot)]<-median(house$sqft_lot,na.rm = T)
+
+#convert required variables in factor format
+#which are bathroom, floor, watarfront, view, condition, grade
+vect1<-c("bedrooms","floors","waterfront","view","condition","grade")
+house[,vect1]<-lapply(house[,vect1],as.factor)
+summary(house)
+
+house$waterfront[is.na(house$waterfront)]<-"0"
+house$floors[is.na(house$floors)]<-"1"
+house$condition[is.na(house$condition)]<-"3"
+colSums(is.na(house))
+
+#check for the outliers in dependent variables
+boxplot(house$price) : has outliers
+IQR(house$price)
+summary(house$price)
+#UW<-Q3+1.5*(IQR)
+UW<-645000+1.5*(323000)
+house1<-subset(house,house$price<=UW)
+UW
+# after removing the outlier observations, 
+# total data size should not drop by more than 15 percent 
+dim(house)
+dim(house1)
+
+
