@@ -1,0 +1,171 @@
+**Linear regression 
+# dep var : cont / numerical 
+# ind var : cont / categorical 
+# regression ? 
+# LR ? : independent var are linearly related with dep variable 
+# direct relation / inverse relation 
+# it is advisable that the data should be normally destributed
+# it is advisable that there should be cor in dep and ind variables 
+
+# house_prise - id , location , area_sf, floor , amenities .......
+# it is advisable that your ind variables must not have cor wrt other ind var 
+# it is advisable that there must not be autocorrelation 
+# it uses the algo: LS 
+# sum of error in LR = 0
+
+# y <- b0+b1x1+b2x2+......+bnxn+error 
+# y = dep var , x1,x2,x3,.....,xn = ind var, b0 = y intercept , error =residule
+# 45 <- 47 -2  
+# y = mx+c 
+# y = b0+b1x1
+#m = r(sdx/sdy)
+
+summary(proficiency)
+# test if the dep var is normal 
+# ho : data is normal 
+# h1 : data is not normal 
+shapiro.test(proficiency$jpi)
+#p =0.575 >0.05 : ho is accepted ; data is normal 
+
+# check the correlation between variables 
+install 'corplot'
+library(corrplot)
+proficiency$empid<-NULL
+cor_mat<-cor(proficiency)
+cor_mat
+corrplot(cor_mat,method = "circle",type = "full")
+
+#QQ plot
+qqplot(proficiency$written,profociency$jpi)
+qqplot(proficiency$tech,profociency$jpi)
+#Pair Plot
+pairs(~.,data = proficiency)
+
+#linear Regression
+jpimodel<-lm(jpi~written+language+tech+gk,data = proficiency)
+                   OR
+jpimodel<-lm(jpi~.,data = proficiency)
+
+# b0 = -54.28, b1=0.32 , b2=0.03 , b3=1.09 , b4=0.53
+# b1= 0.32 : 1 unit increase in wr score ; increases jpi by 0.32 units
+# b2= 0.03 ; 1 unit increase in lang ; increases jpi by 0.03 units
+# b3=1.09 ; 1 unit increase in tech ; increases jpi by 1.09 units
+# b4=0.53 ; 1 unit increase in k ; increases jpi by 0.53 unitsb
+
+proficiency$empid<-NULL
+jpimodel<-lm(jpi~.,data = proficiency)
+jpimodel
+
+summary(jpimodel)
+
+# coefficients 
+jpimodel
+head(proficiency,1)
+pred1<- -54.28225 +(0.32356)*(43.83)+(0.03337)*(55.92)+(1.09547)*(51.82)+(0.53683)*(43.58)
+pred1
+45.52 - 41.92
+
+***Calculation manually how we get Residuals in a model:-***
+pred_jpi<-predict(jpimodel,proficiency)
+head(pred_jpi)
+jpi_res<- proficiency$jpi - pred_jpi
+head(jpi_res)
+summary(jpi_res)
+
+# F-statistic: 49.81 on 4 and 28 DF,  p-value: 2.467e-12
+
+# anova(for model comparision) 
+# null model : having no independent variable(Just to understand how F value and P values comes
+in our linear regresion model) 
+
+# null model : having no independent variable 
+jpi_null<-lm(jpi~1,data = proficiency)
+jpi_null
+mean(proficiency$jpi)
+summary(jpimodel)
+pred_null<-predict(jpi_null,proficiency)
+head(pred_null)
+
+# null hypo : null model and full model are similar
+# alter hypo : null model and full model are significantlly different
+
+anova(jpi_null,jpimodel)
+# F= 49.813 p=2.467e-12 *** <0.05 : reject ho : null and full are diff
+
+summary(jpimodel)
+
+######Example###############
+tip <-c(50,40,20,200,100,45,5,0)
+mean(tip)
+bill_amt<-c(1000,500,300,250,2000,1000)
+tip_amt<-c(100,50,30,25,200,100)
+table1<-data.frame(bill_amt,tip_amt)
+table1
+# 3000 ; 300 
+#####Example###########
+properties<-c(200000,500000,1000000,1500000,3000000,1000000)
+mean(properties)
+########EndOfExample########
+
+
+**LOCAL TESTING
+summary(jpimodel)
+#             Estimate      Std. Error t value         Pr(>|t|)    
+#(Intercept) -54.28225      7.39453    -7.341            5.41e-08 ***
+#  written     0.32356      0.06778     4.774           5.15e-05 ***
+
+# local testing 
+# test if the variable given in the model is significant or not 
+
+# null hypo : if we include written score vs if we exclude written score the avg
+ # value of jpi remains constant 
+# variable is insignifcant 
+
+# alter hypo : if we include written vs if we exclude written score the avg 
+ # value of jpi changes 
+# variable is significant 
+
+# if the value of p < 0.05 ; what will be the mag. of estimate [coefficient]
+  # close to 0 ? or away from 0 ?
+
+jpimodel
+y= -54.28225 +0.32356*(x1)+0.03337*(x2)+1.09547*(x3)+0.53683*(x4)
+head(proficiency,1)
+y1
+y2= -54.28225 +0.000004*(43)+0.000000034*(55)+0.0000002*(51)+0.001*(43)
+y2
+# 
+jpi_1<-lm(jpi~language+tech+gk,data = proficiency)
+anova(jpimodel,jpi_1)
+
+# p value of written variable in local test is 5.15e-05 *** < 0.05 : reject 
+
+# predict the value of jpi using revised model and store into origional table
+proficiency$pred_jpi<-predict(jpi_rev,proficiency)
+# generate the column for residule in the table 
+proficiency$res<- proficiency$jpi - proficiency$pred_jpi
+
+head(proficiency)
+
+# F-value : high or low ?  high 
+# p corrosponding to F : >0.05 or < 0.05 ? : less 
+# std error : less or high ? less 
+# coefficient : high or low ? high 
+# p value assocoated with local testing ? less than 0.05 
+# r square ? > 0.6 
+
+# check of multicolinearity 
+# strong relation between independent variables 
+# multicol. is a bad factor 
+# VIF : variance inflation factor 
+# VIF = 1/1-r2 
+# VIF of variable > = 5 ; the variable causes multicolinearity; need to remove that var
+
+# y =b0+b1x1+b2x2+....bnxn 
+# b0+b1x1+b2x2+....bnxn 
+# x1,x2,x3
+--to check multicol. we make models of each independent variables with 
+rest independent variables
+# lm(x1~x2+x3) :r2 = 0.8 vif=1/1-r2 =5
+  # 80% of variation in value of x1 is explained by the comb of x2 and x3
+
