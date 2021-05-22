@@ -1,0 +1,127 @@
+title:
+author:
+date:
+output:
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#load the data in an object
+#attrition means churner
+#attrition low company success high and vice versa
+```{r loading_data}
+emp_attrition<-read.csv("D:/R studio/NOTES/22-09-2020 WA_Fn-UseC_-HR-Employee-Attrition.csv")
+dim(emp_attrition)
+head(emp_attrition)
+summary(emp_attrition)
+
+#remove id variables
+emp_attrition$EmployeeNumber<-NULL
+
+#remove column which are const throughout
+emp_attrition$EmployeeCount<-NULL
+emp_attrition$Over18<-NULL
+emp_attrition$DailyRate<-NULL
+
+#convert the ordinal/Nominal variables to factors
+summary(emp_attrition)
+vect1<-c("Education","EnvironmentSatisfaction","JobInvolvement","JobLevel",
+"JobSatisfaction","NumCompaniesWorked","PerformanceRating",RelationshipSatisfaction","WorkLifeBalance")
+emp_attrition[,vect1]<-lapply(emp_attrition[,vect1],factor)
+str(emp_attrition)
+```
+
+```{r data partition}
+#storing 75% of random indices in index
+set.seed(200)
+#unless and until we dont change either data or seed[machine], the random index 
+#values will never change: psedo-randomization
+index<-sample(nrow(emp_attrition),0.75*nrow(emp_attrition))
+head(index)
+
+training_attrition<-emp_attrition[index,]
+testing_attrition<-emp_attrition[-index,]
+
+dim(training_attrition)
+dim(testing_attrition)
+ColSum(is.na(training_attrition))
+ColSum(is.na(testing_attrition))
+```
+
+#implement the regression on the training data
+```{r model implementation}
+#as we have more number of columns we will perform stepwise regression for the model
+
+#null model
+null_attrition<-glm(Attrition~1, data=training_attrition, family="binomial")
+attrition_model<- glm(Attrition~., data=training_attrition, family="binomial")
+
+#null deviance>full deviance so good full model
+
+#AIC: 580.22
+summary(attrition_model)
+
+#check in summary null deviance must be high then residual deviance, if not then drp the model
+
+#stepwise regression
+step(attrition_model, direction="backward", scope= list(lower=null_attrition,upper=attrition_model))
+
+#model from stepwise reg. call
+pic
+
+summary(attrition_model_rev)
+#AIC of rev model: 699.83
+```
+
+#prediction based on revised model
+```{r prediction}
+#predicts the prob of beign "1"
+str(training_attrition$Attrition)
+training_attrition$pred_prob<-predict(attrition_model_rev, training_attrition
+type="response")
+head(training_attrition)
+
+# identify the accurate value of threshold
+library[ROCR]
+pred<-prediction(training_attrition$pred_prob, training_attrition$Attrition)
+perf<-performance(pred,"tpr","tnr")
+plot(pref, colorize=T, print.cutoffs.at=seq(0.1,1.0,0.1))
+#from the diagramn for the unbiased result we need to shift the cutoff to 0.2 from default 0.5 cutoff
+#as we have more non-attrited employees the cutoff is getting  low
+
+#generate pred_attrition values
+
+training_attrition$pred_attr<-ifelse(training_attrition$pred_prob>0.2,"1","0")
+
+# genaret confusion martix
+table(pred= training_attrition$pred_attr,actual=training_attrition$Attrition)
+
+# cross validate the results with the testing data 
+testing_attrition$pred_prob<-predict(attrition_model_rev,testing_attrition,type="response")
+head(testing_attrition)
+
+testing_attrition$pred_attrition<-ifelse(testing_attrition$pred_prob>0.2,"1","0")
+
+table(pred=testing_attrition$pred_attrition,actual=testing_attrition$Attrition)
+
+acc_test<-(243+44)/nrow(testing_attrition);acc_test
+miss_test<- 1- acc_test;miss_test
+sen_test<- 44 / (44+12);sen_test
+spe_test <- 243 /(243+69);spe_test
+
+
+# the ans for sensitivity , specificity , accuracy are high [greater than 60 %] 
+#and is almost equal for training and testing partition ; thus model performs similarly 
+#for different sample observations . 
+
+
+# overall accuracy using ROCR 
+auc_train<-performance(pred,"auc")
+auc_train@y.values
+
+```
+
+
+
+
