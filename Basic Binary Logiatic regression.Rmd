@@ -1,0 +1,65 @@
+---
+title: "Binary_logistic_bank_Application"
+author: "prachi samant"
+date: "9/17/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# load the data and perform required transformations 
+```{r load_data}
+bank_loan<-read.csv("BANK LOAN.csv")
+summary(bank_loan)
+str(bank_loan)
+bank_loan$AGE<-as.factor(bank_loan$AGE)
+bank_loan$DEFAULTER<-as.factor(bank_loan$DEFAULTER)
+bank_loan$SN<-NULL
+```
+
+# generate logistic model for the given data 
+```{r model}
+bank_model<-glm(DEFAULTER~.,data = bank_loan,family = "binomial")
+summary(bank_model) # AIC: 569
+
+# stepwise regression 
+null_model<-glm(DEFAULTER~1,data = bank_loan,family = "binomial")
+step(null_model,direction = "forward",scope = list(lower=null_model,upper=bank_model))
+
+bank_model_rev<-glm(formula = DEFAULTER ~ DEBTINC + EMPLOY + CREDDEBT + ADDRESS, 
+    family = "binomial", data = bank_loan)
+summary(bank_model_rev) # AIC: 566
+```
+
+# predict the probabilty using the model
+```{r prediction}
+# lm : y= bo+b1x1++b2x2+....+bnxn
+# glm = p =e^(b0+b1x1+b2x2+...+bnxn) / 1+e^(b0+b1x1+b2x2+...+bnxn)
+
+bank_loan$pred_prob<-predict(bank_model_rev,bank_loan,type = "response")
+head(bank_loan)
+
+# default threhold = 0.5 
+# if probability >0.5 = DEFAULTER , else NON DEFAULTER 
+bank_loan$pred_defaulter<-ifelse(bank_loan$pred_prob>0.5,"1","0")
+head(bank_loan)
+
+# confusion matrix
+table(actual= bank_loan$DEFAULTER, pred=bank_loan$pred_defaulter)
+
+# 478 = actual 0 ; predicted as 0 
+# 39  = actual 0 ; predicted as 1
+# 91  = actaul 1 ; predicted as 0
+# 92  = actual 1 ; predicted as 1
+
+table(pred=bank_loan$pred_defaulter,actual=bank_loan$DEFAULTER)
+
+#accuracy = (correctly predicted 1 + correctly predicted 0)/ total observations 
+(478+92)/nrow(bank_loan)
+
+# misclassification = (wrongly predicted 1 + wrongly predicted 0)/total observation
+# misclassification = 1 - classification
+1 - 0.8142857
+```
